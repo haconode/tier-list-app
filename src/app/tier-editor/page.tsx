@@ -1,7 +1,7 @@
 // app/tier-editor/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -187,7 +187,7 @@ export default function TierEditorPage() {
   const [tierList, setTierList] = useState<Record<PositionKey, Character[]>>(createInitialTierList);
   const [activeChar, setActiveChar] = useState<Character | null>(null);
   const [activeFromKey, setActiveFromKey] = useState<PositionKey | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [setImageUrl] = useState<string | null>(null);
 
   const handleDragStart = (event: DragStartEvent) => {
     const from = event.active.data.current?.from as PositionKey;
@@ -196,7 +196,7 @@ export default function TierEditorPage() {
     setActiveChar(char);
   };
 
-  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+  const handleDragEnd = ({ over }: DragEndEvent) => {
     if (!over || !activeChar || !activeFromKey) {
       setActiveChar(null);
       return;
