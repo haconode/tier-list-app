@@ -295,7 +295,7 @@ export default function TierEditorPage() {
   };
 
   function CloneTargetArea() {
-    const { setNodeRef, isOver } = useDroppable({ id: "clone-area" });
+    const { setNodeRef } = useDroppable({ id: "clone-area" });
   
     return (
       <div
