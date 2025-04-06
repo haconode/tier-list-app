@@ -24,7 +24,7 @@ const tiers = ["S", "A", "B", "C", "D"] as const;
 const roles = ["EXP", "ROAM", "MID", "JG", "GOLD"] as const;
 type Tier = typeof tiers[number];
 type Role = typeof roles[number];
-type PositionKey = `${Tier}-${Role}`;
+type PositionKey = `${Tier}-${Role}` | "clone-storage";
 
 interface Character {
   id: string;
@@ -187,13 +187,28 @@ export default function TierEditorPage() {
   const [tierList, setTierList] = useState<Record<PositionKey, Character[]>>(createInitialTierList);
   const [activeChar, setActiveChar] = useState<Character | null>(null);
   const [activeFromKey, setActiveFromKey] = useState<PositionKey | null>(null);
-  const [,　setImageUrl] = useState<string | null>(null);
+  const [, setImageUrl] = useState<string | null>(null);
+  const [clonedCharacters, setClonedCharacters] = useState<Character[]>([]);
+  const generateUniqueId = () => `clone-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+  const handleCloneDrop = (char: Character) => {
+    const newChar: Character = {
+      ...char,
+      id: generateUniqueId(),
+      isClone: true,
+    };
+    setClonedCharacters((prev) => [...prev, newChar]);
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     const from = event.active.data.current?.from as PositionKey;
     const char = event.active.data.current?.char as Character;
     setActiveFromKey(from);
     setActiveChar(char);
+
+    if (from === "clone-storage") {
+      setClonedCharacters((prev) => prev.filter((c) => c.id !== char.id));
+    }
   };
 
   const handleDragEnd = ({ over }: DragEndEvent) => {
@@ -204,6 +219,27 @@ export default function TierEditorPage() {
 
     const toKey = (over.data.current?.from ?? over.id) as PositionKey;
     if (!toKey) {
+      setActiveChar(null);
+      return;
+    }
+
+    if (over.id === "clone-area") {
+      handleCloneDrop(activeChar);
+      setActiveChar(null);
+      return;
+    }
+
+    if (over.id === "delete-area") {
+      if (activeFromKey === "clone-storage") {
+        // 複製キャラだった場合
+        setClonedCharacters((prev) => prev.filter((c) => c.id !== activeChar.id));
+      } else {
+        // Tier表内のキャラだった場合
+        const newList = { ...tierList };
+        newList[activeFromKey] = newList[activeFromKey].filter((c) => c.id !== activeChar.id);
+        setTierList(newList);
+      }
+    
       setActiveChar(null);
       return;
     }
@@ -220,15 +256,20 @@ export default function TierEditorPage() {
       const overId = over.id;
       const overIndex = tierList[toKey].findIndex((c) => c.id === overId);
       const insertIndex = overIndex !== -1 ? overIndex : tierList[toKey].length;
-    
+
       const newList = { ...tierList };
-      newList[activeFromKey] = newList[activeFromKey].filter((c) => c.id !== activeChar.id);
+
+      // 👇 clone-storageから来たときは削除処理をスキップ！
+      if (activeFromKey !== "clone-storage") {
+        newList[activeFromKey] = newList[activeFromKey].filter((c) => c.id !== activeChar.id);
+      }
+
       newList[toKey] = [
         ...newList[toKey].slice(0, insertIndex),
         activeChar,
         ...newList[toKey].slice(insertIndex),
       ];
-    
+
       setTierList(newList);
 
     }
@@ -253,6 +294,41 @@ export default function TierEditorPage() {
     }
   };
 
+  function CloneTargetArea() {
+    const { setNodeRef, isOver } = useDroppable({ id: "clone-area" });
+  
+    return (
+      <div
+        ref={setNodeRef}
+        className="flex items-center gap-2 p-2 border rounded border-none bg-[#222]"
+        style={{ minHeight: 60 }}
+      >
+        <Image src="/images/plus.png" alt="複製" width={70} height={70} />
+        <div className="flex flex-wrap gap-2">
+          {clonedCharacters.map((char) => (
+            <SortableCharacter key={char.id} char={char} from="clone-storage" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  function DeleteTargetArea() {
+    const { setNodeRef, isOver } = useDroppable({ id: "delete-area" });
+  
+    return (
+      <div
+        ref={setNodeRef}
+        className={`flex items-center justify-center w-[64px] h-[64px] border rounded ${
+          isOver ? "bg-red-700" : "bg-[#333]"
+        }`}
+        style={{ transition: "0.2s" }}
+      >
+        <Image src="/images/delete.png" alt="削除" width={70} height={70} />
+      </div>
+    );
+  }
+
   return (
     <DndContext
       collisionDetection={closestCenter}
@@ -270,6 +346,11 @@ export default function TierEditorPage() {
                 />
             </div>
             <button className="bg-green-500 text-white px-4 py-2 rounded" onClick={handleSaveImage}>画像保存</button>
+            <span className="text-white text-sm whitespace-nowrap">
+              複製したいキャラをドラッグ&ドロップしてね→
+            </span>
+            <CloneTargetArea />
+            <DeleteTargetArea />
         </div>
 
         <div id="tier-table" className="overflow-auto p-4 border rounded bg-black shadow-lg">
