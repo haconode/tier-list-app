@@ -218,17 +218,15 @@ export default function TierEditorPage() {
     }
 
     const toKey = (over.data.current?.from ?? over.id) as PositionKey;
-    if (!toKey) {
-      setActiveChar(null);
-      return;
-    }
 
+    //複製エリアへのドロップ
     if (over.id === "clone-area") {
       handleCloneDrop(activeChar);
       setActiveChar(null);
       return;
     }
-
+    
+    //削除エリアへのドロップ
     if (over.id === "delete-area") {
       if (activeFromKey === "clone-storage") {
         // 複製キャラだった場合
@@ -240,6 +238,12 @@ export default function TierEditorPage() {
         setTierList(newList);
       }
     
+      setActiveChar(null);
+      return;
+    }
+
+    //安全チェック
+    if (!(toKey in tierList)) {
       setActiveChar(null);
       return;
     }
