@@ -366,8 +366,10 @@ export default function TierEditorPage() {
                             alt={role}
                             width={48}
                             height={48}
-                            objectFit="cover"
-                            objectPosition="center"
+                            style={{
+                              objectFit: "contain", // ← はみ出さないように修正
+                              objectPosition: "center",
+                            }}
                         />
                     </div>
                   </th>
@@ -384,8 +386,10 @@ export default function TierEditorPage() {
                             alt={tier}
                             width={48}
                             height={48}
-                            objectFit="cover"
-                            objectPosition="center"
+                            style={{
+                              objectFit: "contain", // ← はみ出さないように修正
+                              objectPosition: "center",
+                            }}
                         />
                         </div>
                     </td>
@@ -413,7 +417,11 @@ export default function TierEditorPage() {
             src={activeChar.img}
             alt={activeChar.name}
             width={48}
-            height={48}
+            height={96}
+            style={{
+              objectFit: "contain", // ← containでサイズ崩れ防止
+              objectPosition: "center",
+            }}
             className="rounded-full"
           />
         ) : null}
@@ -480,8 +488,12 @@ function SortableCharacter({
       src={char.img}
       alt={char.name}
       width={48}
-      height={48}
-      style={style}
+      height={96}
+      style={{
+        ...style,
+        objectFit: "contain",     // ← 縦長問題を解決
+        objectPosition: "center",
+      }}
       className="rounded-full border cursor-move"
     />
   );
