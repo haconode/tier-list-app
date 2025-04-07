@@ -284,6 +284,9 @@ export default function TierEditorPage() {
   const handleSaveImage = async () => {
     const target = document.getElementById("tier-table");
     if (!target) return;
+
+    // DOM更新の次フレームを待つ（2回呼ぶとより安定）
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   
     try {
       const dataUrl = await toPng(target, { cacheBust: true });
@@ -485,7 +488,7 @@ function SortableCharacter({
   };
 
   return (
-    <Image
+    <img
       ref={setNodeRef}
       {...attributes}
       {...listeners}
@@ -495,10 +498,12 @@ function SortableCharacter({
       height={96}
       style={{
         ...style,
-        objectFit: "contain",     // ← 縦長問題を解決
+        objectFit: "contain",
         objectPosition: "center",
+        borderRadius: "9999px",
+        border: "1px solid #ccc",
+        cursor: "move",
       }}
-      className="rounded-full border cursor-move"
     />
   );
 }
